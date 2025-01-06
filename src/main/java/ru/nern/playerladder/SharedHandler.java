@@ -5,6 +5,7 @@ import net.minecraft.ResourceLocationException;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.LoggedPrintStream;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.tags.TagKey;
@@ -26,6 +27,9 @@ public class SharedHandler {
     private static final Set<EntityType<?>> entityTypesToExclude = Sets.newHashSet();
     private static final Set<TagKey<EntityType<?>>> entityTagsToExclude = Sets.newHashSet();
 
+    private static boolean justPickedUp = false;
+    private static int tickCounter = 0;
+
     public static InteractionResult rideEntity(Player player, Entity newVehicle, Level level, InteractionHand hand) {
         if(!level.isClientSide() && hand == InteractionHand.MAIN_HAND && canPickUpOrRideLiving(newVehicle) && player.getItemInHand(hand).isEmpty()) {
             Entity vehicle = getHighestOrSelf(newVehicle, player, config().server.stepUpLimit);
@@ -39,12 +43,12 @@ public class SharedHandler {
     }
 
     public static InteractionResult pickUpEntity(Player player, Entity newPassenger, Level level, InteractionHand hand) {
-        if(!level.isClientSide() && hand == InteractionHand.MAIN_HAND && canPickUpOrRideLiving(newPassenger) && player.getItemInHand(hand).isEmpty()) {
+        if(!level.isClientSide() && hand == InteractionHand.MAIN_HAND && canPickUpOrRideLiving(newPassenger) && player.getItemInHand(hand).isEmpty() && player.isCrouching()) {
             Entity vehicle = getHighestOrSelf(player, newPassenger, config().server.pickUpLimit);
 
             if(vehicle == null) return InteractionResult.FAIL;
             newPassenger.startRiding(vehicle);
-
+            justPickedUp = true;
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;
@@ -82,8 +86,18 @@ public class SharedHandler {
     }
 
     public static void onPlayerTick(Player player) {
-        if(!player.level().isClientSide && player.onGround() && player.isVehicle() && player.isCrouching())
+        if(!player.level().isClientSide && player.onGround() && player.isVehicle() && player.isCrouching() && !justPickedUp) {
             player.getFirstPassenger().stopRiding();
+
+        }
+        else {
+            if (player.isCrouching()) tickCounter++;
+            if (tickCounter >= 10){
+                tickCounter = 0;
+                justPickedUp = false;
+
+            }
+        }
     }
 
     public static void onLogOut(Player player) {
