@@ -7,6 +7,8 @@ You can also install it on the client:<br>
 In **1.20.1**: it will offset the rider in the first person.<br>
 In **1.21+**: it will give you the ability to interact with the world when someone is sitting on top of you.
 
+This Fork adds the Requirement to sneak when picking up entities, and a 100 tick timer to put them down again.
+
 To enable [Pick Up Me]([https://modrinth.com/mod/pickup-me](https://modrinth.com/mod/pickup-me)) functionality, you need to switch **rightClickMode** to "PICK_UP"
 
 Only the latest version of Minecraft is supported.
